@@ -19,5 +19,7 @@ urlpatterns = [
 
     ##API_URLS
     path('api/login', auth.loginUser),
-    path('api/register', auth.registerUser)
+    path('api/register', auth.registerUser),
+    path('api/chats/<id>', views.apiChats),
+    path('api/people', views.getPeople),
 ]

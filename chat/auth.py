@@ -20,7 +20,7 @@ def loginUser(request):
     phonenumber = request.data.get("username")
     password = request.data.get("password")
 
-    buyer = Customer.objects.filter(phone_number= phonenumber).first()
+    buyer = Customer.objects.filter(username= phonenumber).first()
     username = buyer.username
     if username is None or password is None:
         return Response({'error': 'Please provide both username and password'}, status=status.HTTP_400_BAD_REQUEST)
@@ -53,22 +53,20 @@ def registerUser(request):
     phonenumber = request.data.get("number")
     password = request.data.get("password")
     email = request.data.get("email")
-    id_number = request.data.get("id_number")
-    name = request.data.get("name")
+    username = request.data.get("username")
 
-    if name is None or password is None:
+    if username is None or password is None:
         return Response({'error': 'Please provide both username and password'}, status=status.HTTP_400_BAD_REQUEST)
 
-    user = Customer.objects.filter(username = name).first()
+    user = Customer.objects.filter(username = username).first()
 
     if user:
         return Response({'error': 'Username already exists'}, status=status.HTTP_403_FORBIDDEN)
 
     user = Customer()
-    user.username = name
+    user.username = username
     user.phone_number = phonenumber
     user.email = email
-    user.id_number = id_number
     user.set_password(password)
     user.is_staff = False
     user.save()
@@ -78,19 +76,14 @@ def registerUser(request):
     context = {
         'token': token.key,
         'id': user.id,
-        'username': name,
+        'username': username,
         'email': user.email,
         'first_name': user.first_name,
         'last_name': user.last_name,
         'phone_number' : phonenumber,
-        'address' : user.address
     }
 
     return Response(context,
                     status=status.HTTP_200_OK)
 
 
-def getToken(request):
-    r_token = request.META['HTTP_AUTHORIZATION']
-
-    return r_token.split(' ', 1)[1] 

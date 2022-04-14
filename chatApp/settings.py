@@ -25,7 +25,7 @@ SECRET_KEY = 'django-insecure-vd!#re9-@xrh-n&h7b#a(+0v5oxf-q!os!ot3#!$l@*952p5t3
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['*']
 
 
 # Application definition
@@ -54,6 +54,14 @@ MIDDLEWARE = [
 ]
 
 ROOT_URLCONF = 'chatApp.urls'
+
+REST_FRAMEWORK = {
+    'DEFAULT_AUTHENTICATION_CLASSES': [
+        'rest_framework.authentication.TokenAuthentication',
+    ],
+    'DEFAULT_FILTER_BACKENDS': ('django_filters.rest_framework.DjangoFilterBackend',)
+}
+
 
 TEMPLATES = [
     {

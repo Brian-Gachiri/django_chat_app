@@ -9,6 +9,15 @@ from django.contrib.auth.models import User as UserModel
 from django.db.models import Q
 import json,datetime
 from django.core import serializers
+from rest_framework.authtoken.models import Token
+from .models import Customer
+from rest_framework.decorators import api_view, permission_classes
+from rest_framework.response import Response
+from rest_framework import status
+from rest_framework.permissions import IsAuthenticated, AllowAny
+from rest_framework import serializers
+
+
 
 # Create your views here.
 @login_required
@@ -89,3 +98,62 @@ def send_chat(request):
 
     return HttpResponse(json.dumps(resp), content_type="application/json")
 
+@api_view(["GET"])
+@permission_classes((IsAuthenticated,))
+def apiChats(request, id):
+
+    request_token = getToken(request)
+
+    token = Token.objects.filter(key=request_token).first()
+    user = Customer.objects.filter(pk=token.user_id).first()
+
+    chats = chatMessages.objects.filter(Q(user_from=user.id) | Q(user_to=user.id)).filter(Q(user_from=id) | Q(user_to=id))
+    # chats = chatMessages.objects.all()
+
+    if not chats:
+        return Response({}, status=status.HTTP_404_NOT_FOUND)
+
+    new_msgs = []
+    for chat in list(chats):
+        data = {}
+        data['id'] = chat.id
+        data['user_from'] = chat.user_from.id
+        data['user_from_name'] = chat.user_from.username
+        data['user_to'] = chat.user_to.id
+        data['user_to_name'] = chat.user_to.username
+        data['message'] = chat.message
+        data['date_created'] = chat.date_created.strftime("%b-%d-%Y %H:%M")
+        new_msgs.append(data)
+
+    return Response(new_msgs,
+                    status=status.HTTP_200_OK)
+
+@api_view(["GET"])
+@permission_classes((IsAuthenticated,))
+def getPeople(request):
+
+    request_token = getToken(request)
+
+    token = Token.objects.filter(key=request_token).first()
+    people = UserModel.objects.exclude(pk = token.user_id)
+    
+    data = UserModelSerializer(people, many=True)
+
+    return Response(data.data,
+                    status=status.HTTP_200_OK)
+
+
+
+class UserModelSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = UserModel
+        fields = ['id', 'username', 'email']
+
+
+
+
+
+def getToken(request):
+    r_token = request.META['HTTP_AUTHORIZATION']
+
+    return r_token.split(' ', 1)[1] 
