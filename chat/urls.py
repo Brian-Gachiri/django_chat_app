@@ -22,4 +22,5 @@ urlpatterns = [
     path('api/register', auth.registerUser),
     path('api/chats/<id>', views.apiChats),
     path('api/people', views.getPeople),
+    path('api/send/message', views.sendMessage),
 ]

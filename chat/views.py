@@ -142,6 +142,49 @@ def getPeople(request):
     return Response(data.data,
                     status=status.HTTP_200_OK)
 
+@api_view(["POST"])
+@permission_classes((IsAuthenticated,))
+def sendMessage(request):
+    resp = {}
+    request_token = getToken(request)
+
+    token = Token.objects.filter(key=request_token).first()
+    u_from = UserModel.objects.filter(pk = token.user_id).first()
+    if request.method == 'POST':
+        post =request.POST
+        
+        u_to = UserModel.objects.get(id=request.data.get('user_to'))
+        insert = chatMessages(user_from=u_from,user_to=u_to,message=request.data.get('message'))
+        try:
+            insert.save()
+            resp['status'] = 'success'
+        except Exception as ex:
+            resp['status'] = 'failed'
+            resp['mesg'] = ex
+    else:
+        resp['status'] = 'failed'
+
+    chats = chatMessages.objects.filter(Q(user_from=u_from) | Q(user_to=u_from)).filter(Q(user_from=u_to) | Q(user_to=u_to))
+    # chats = chatMessages.objects.all()
+
+    if not chats:
+        return Response({}, status=status.HTTP_404_NOT_FOUND)
+
+    new_msgs = []
+    for chat in list(chats):
+        data = {}
+        data['id'] = chat.id
+        data['user_from'] = chat.user_from.id
+        data['user_from_name'] = chat.user_from.username
+        data['user_to'] = chat.user_to.id
+        data['user_to_name'] = chat.user_to.username
+        data['message'] = chat.message
+        data['date_created'] = chat.date_created.strftime("%b-%d-%Y %H:%M")
+        new_msgs.append(data)
+
+    return Response(new_msgs,
+                    status=status.HTTP_200_OK)
+
 
 
 class UserModelSerializer(serializers.ModelSerializer):
